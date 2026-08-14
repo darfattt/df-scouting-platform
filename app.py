@@ -195,7 +195,7 @@ def inject_nike_css():
 def main():
     inject_nike_css()
     # Sidebar: Logo and Title
-    st.sidebar.title("Scouting Tools")
+    st.sidebar.title("DF Scouting")
     st.sidebar.markdown("---")
 
     # Sidebar: Global Filters
