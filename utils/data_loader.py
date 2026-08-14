@@ -301,12 +301,19 @@ def get_all_stat_columns(stat_categories: Dict) -> List[str]:
         stat_categories: Dictionary of stat categories
 
     Returns:
-        List of all stat column names
+        List of all stat column names, de-duplicated in first-seen order.
+        Some stats (e.g. "Aerial duels per 90") are deliberately listed under
+        more than one category; returning them twice makes callers that build
+        one widget per stat collide on the widget key.
     """
     all_columns = []
+    seen = set()
     for category in stat_categories.values():
         for stat in category["stats"]:
-            all_columns.append(stat["column"])
+            column = stat["column"]
+            if column not in seen:
+                seen.add(column)
+                all_columns.append(column)
 
     return all_columns
 
