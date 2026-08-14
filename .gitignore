@@ -22,6 +22,7 @@ data/*
 data/2025/*
 !data/2025/south_east_asia/
 !data/2025/europe/
+!data/2025/indonesia/
 
 # Local scratch / build junk
 nul

@@ -224,7 +224,7 @@ def main():
         selected_continents = st.sidebar.multiselect(
             "Continents:",
             options=available_continents,
-            default=["south_east_asia"],
+            default=available_continents,
             help="Select continent folders to load data from",
             key="continent_multiselect",
         )
