@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)"
+    ],
+    "deny": []
+  },
+  "enabledPlugins": {
+    "spring-boot-dev@sivalabs-marketplace": false
+  }
+}
