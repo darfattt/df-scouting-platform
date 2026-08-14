@@ -17,6 +17,23 @@ from styles.design_system import CANVAS, SOFT_CLOUD, INK, MUTE, SUCCESS, apply_n
 from datetime import datetime
 
 
+def _dedupe_by_wyscout_id(df: pd.DataFrame) -> pd.DataFrame:
+    """Keep one row per Wyscout id, preferring the row with the most minutes.
+
+    Minutes is sorted through a coerced numeric copy: a league export that carries a
+    placeholder string makes the column object dtype, and sorting that mix of str and
+    int raises TypeError.
+    """
+    if "Minutes" not in df.columns:
+        return df.drop_duplicates(subset=["Wyscout id"], keep="first")
+
+    order = pd.to_numeric(df["Minutes"], errors="coerce").fillna(-1)
+    return (
+        df.loc[order.sort_values(ascending=False).index]
+        .drop_duplicates(subset=["Wyscout id"], keep="first")
+    )
+
+
 class SimilarityScorer:
     """
     Calculate player-to-player similarity using weighted metrics
@@ -40,13 +57,7 @@ class SimilarityScorer:
         # Deduplicate by Wyscout id to prevent the same player appearing multiple times
         # when data is loaded from multiple league CSV files. Keep row with most minutes.
         if "Wyscout id" in self.df.columns:
-            if "Minutes" in self.df.columns:
-                self.df = (
-                    self.df.sort_values("Minutes", ascending=False)
-                    .drop_duplicates(subset=["Wyscout id"], keep="first")
-                )
-            else:
-                self.df = self.df.drop_duplicates(subset=["Wyscout id"], keep="first")
+            self.df = _dedupe_by_wyscout_id(self.df)
         self.stat_columns = stat_columns
         self.composite_columns = composite_columns if composite_columns else []
         self.all_selectable_columns = stat_columns + self.composite_columns
@@ -99,16 +110,18 @@ class SimilarityScorer:
         # Exclude reference player from candidates
         candidates = candidates[candidates["Player"] != reference_player_name]
 
-        # Minutes filter (if Minutes column exists)
+        # Minutes filter (if Minutes column exists). Coerce first: a league CSV that
+        # exports a non-numeric placeholder makes the column object/str dtype, and
+        # comparing that to an int raises TypeError.
         if "Minutes" in candidates.columns:
-            candidates = candidates[candidates["Minutes"] >= min_minutes]
+            minutes = pd.to_numeric(candidates["Minutes"], errors="coerce")
+            candidates = candidates[minutes.fillna(0) >= min_minutes]
 
         # Age filter
         if "Age" in candidates.columns:
             min_age, max_age = age_range
-            candidates = candidates[
-                (candidates["Age"] >= min_age) & (candidates["Age"] <= max_age)
-            ]
+            ages = pd.to_numeric(candidates["Age"], errors="coerce")
+            candidates = candidates[(ages >= min_age) & (ages <= max_age)]
 
         # Same position filter
         if same_position_only and "Position" in candidates.columns:
@@ -117,13 +130,7 @@ class SimilarityScorer:
 
         # Deduplicate by Wyscout id (keep highest minutes among duplicates)
         if "Wyscout id" in candidates.columns:
-            if "Minutes" in candidates.columns:
-                candidates = (
-                    candidates.sort_values("Minutes", ascending=False)
-                    .drop_duplicates(subset=["Wyscout id"], keep="first")
-                )
-            else:
-                candidates = candidates.drop_duplicates(subset=["Wyscout id"], keep="first")
+            candidates = _dedupe_by_wyscout_id(candidates)
 
         if len(candidates) == 0:
             # Return empty dataframe with expected columns
@@ -161,13 +168,18 @@ class SimilarityScorer:
         candidate_vectors = []
 
         for metric in metric_names:
-            # Get values
-            ref_val = ref_player[metric]
-            cand_vals = candidates[metric].values
+            # Get values. to_numeric guards against columns that arrive as object/str
+            # dtype from a league export: min()/max() and the arithmetic below raise
+            # TypeError on those.
+            ref_val = pd.to_numeric(ref_player[metric], errors="coerce")
+            cand_vals = pd.to_numeric(
+                candidates[metric], errors="coerce"
+            ).to_numpy(dtype=float)
 
             # Handle NaN
             if pd.isna(ref_val):
                 ref_val = 0
+            ref_val = float(ref_val)
             # nan= must be keyword: the second positional arg is `copy`, and
             # copy=0 makes numpy write into the DataFrame's own buffer, which
             # is read-only under copy-on-write.

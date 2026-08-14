@@ -282,7 +282,6 @@ def main():
             "League Fit Analysis",
             "Shoot Analysis",
             "Team Analysis",
-            "AI Intelligence",
             "Outlier Intelligence",
         ]
     )
@@ -319,6 +318,8 @@ def main():
         )
         render_team_analysis_page(df_team_squad, selected_position_group)
     elif page == "AI Intelligence":
+        # Hidden from the navigation menu; the page module is still imported because
+        # Outlier Intelligence reuses its pipeline/model/enrichment helpers.
         render_ai_intelligence_page(df_filtered, selected_position_group)
     elif page == "Outlier Intelligence":
         from page.outlier_intelligence import render_outlier_intelligence_page

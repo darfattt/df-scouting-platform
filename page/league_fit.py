@@ -192,11 +192,14 @@ def _render_results_table(scored_df: pd.DataFrame, target_league: str):
         except Exception:
             return ""
 
-    styled = (
-        table_df.style
-        .applymap(_style_risk, subset=["risk"])
-        .applymap(_style_score, subset=["fit_score"])
-        .format({"fit_score": "{:.1f}", "Age": "{:.0f}"})
+    # Styler.map replaced Styler.applymap, which pandas 3.0 removed.
+    styled = table_df.style
+    if "risk" in table_df.columns:
+        styled = styled.map(_style_risk, subset=["risk"])
+    if "fit_score" in table_df.columns:
+        styled = styled.map(_style_score, subset=["fit_score"])
+    styled = styled.format(
+        {k: v for k, v in {"fit_score": "{:.1f}", "Age": "{:.0f}"}.items() if k in table_df.columns}
     )
     st.dataframe(styled, use_container_width=True, hide_index=True)
 

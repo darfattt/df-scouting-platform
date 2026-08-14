@@ -481,11 +481,12 @@ def _render_results_section(selected_position_group: str):
     if available_cols:
         tier_color_cols = [
             c for c in ("predicted_tier_label", "predicted_tier_label_global")
-            if c in df_display.columns
+            if c in available_cols
         ]
-        styled_df = df_display[available_cols].style.applymap(
-            color_tiers, subset=tier_color_cols
-        )
+        # Styler.map replaced Styler.applymap, which pandas 3.0 removed.
+        styled_df = df_display[available_cols].style
+        if tier_color_cols:
+            styled_df = styled_df.map(color_tiers, subset=tier_color_cols)
         st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
     # ── AI Analyst Section ───────────────────────────────────────────────────

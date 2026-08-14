@@ -1,8 +1,11 @@
 # Core app
+# pandas is capped below 3.0: the deployed app installs the newest release, and
+# pandas 3 changes (copy-on-write buffers, Styler.applymap removal, str dtype)
+# break code that works locally on 2.x. Lift the cap only after testing on 3.x.
 streamlit>=1.40.0
-pandas>=2.2.0
-numpy>=1.26.0
-scipy>=1.11.0
+pandas>=2.2.0,<3.0.0
+numpy>=1.26.0,<3.0.0
+scipy>=1.11.0,<2.0.0
 
 # Visualization
 matplotlib>=3.8.0

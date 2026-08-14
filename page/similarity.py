@@ -326,6 +326,8 @@ def render_player_similarity_page(df_filtered, selected_position_group):
                         }
                         # Initialize display DataFrame with default top-10 (no post-filters applied yet)
                         st.session_state.similarity_df_display = results_df.head(10).copy()
+                        # Drop the method comparison: it belongs to the previous reference player
+                        st.session_state.pop("similarity_method_comparison", None)
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
 
@@ -425,9 +427,34 @@ def render_player_similarity_page(df_filtered, selected_position_group):
             display_similarity_player_detail(df_display, results["scorer"], results["reference_player"], results["weights"])
         with tab5:
             st.subheader("Method Comparison")
-            comparison_df = results["scorer"].compare_methods(results["reference_player"], results["weights"], top_n=15, min_minutes=int(min_minutes), age_range=age_range, same_position_only=False)
-            # if len(comparison_df) > 0:
-            #     fig = create_similarity_table_figure(comparison_df, results["reference_player"], df_filtered, top_n=20)
-            #     st.pyplot(fig)
-            #     plt.close(fig)
-            #     st.dataframe(comparison_df.style.format({"cosine_score": "{:.3f}", "euclidean_score": "{:.3f}", "pearson_score": "{:.3f}", "average_score": "{:.3f}"}).background_gradient(subset=["average_score"], cmap="YlOrRd"), use_container_width=True)
+            st.caption(
+                f"Ranks the top 15 matches for **{results['reference_player']}** under each "
+                "similarity method (cosine, euclidean, pearson) using the weights above."
+            )
+
+            if st.button("Compare Methods", key="sim_compare_methods", type="primary"):
+                try:
+                    with st.spinner("Running all three similarity methods..."):
+                        st.session_state.similarity_method_comparison = results["scorer"].compare_methods(
+                            results["reference_player"],
+                            results["weights"],
+                            top_n=15,
+                            min_minutes=int(min_minutes),
+                            age_range=age_range,
+                            same_position_only=False,
+                        )
+                except Exception as e:
+                    st.session_state.pop("similarity_method_comparison", None)
+                    st.error(f"❌ Method comparison failed: {type(e).__name__}: {e}")
+
+            comparison_df = st.session_state.get("similarity_method_comparison")
+            if comparison_df is None:
+                st.info("Click **Compare Methods** to score the shortlist with all three methods.")
+            elif len(comparison_df) == 0:
+                st.warning("⚠️ No players matched the current minutes/age filters.")
+            else:
+                score_cols = [c for c in ["cosine_score", "euclidean_score", "pearson_score", "average_score"] if c in comparison_df.columns]
+                styled = comparison_df.style.format({c: "{:.3f}" for c in score_cols})
+                if "average_score" in comparison_df.columns:
+                    styled = styled.background_gradient(subset=["average_score"], cmap="YlOrRd")
+                st.dataframe(styled, use_container_width=True, hide_index=True)
