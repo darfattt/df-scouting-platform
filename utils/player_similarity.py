@@ -616,12 +616,14 @@ class SimilarityScorer:
                 min_minutes=min_minutes,
                 age_range=age_range,
                 same_position_only=same_position_only,
-                top_n=top_n,
             )
 
-            # Extract player + score columns only
+            # calculate_similarity returns every candidate ranked; trimming to
+            # top_n is the caller's job.
             if len(result_df) > 0:
-                method_results = result_df[["Player", "Similarity_Score"]].copy()
+                method_results = result_df.head(top_n)[
+                    ["Player", "Similarity_Score"]
+                ].copy()
                 method_results = method_results.rename(
                     columns={"Similarity_Score": f"{method}_score"}
                 )
