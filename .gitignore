@@ -14,13 +14,14 @@ archieves/
 .env
 .streamlit/secrets.toml
 
-# Data: ignored by default, except the continent shipped to Streamlit Cloud.
+# Data: ignored by default, except the continents shipped to Streamlit Cloud.
 # Git won't descend into an excluded directory, so each level must be
 # re-opened before the exception can match.
 data/*
 !data/2025/
 data/2025/*
 !data/2025/south_east_asia/
+!data/2025/europe/
 
 # Local scratch / build junk
 nul
