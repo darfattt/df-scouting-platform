@@ -169,10 +169,20 @@ def inject_nike_css():
     [data-testid="stMultiSelect"] span[data-baseweb="tag"] {
         background-color: #111111 !important;
         border-radius: 9999px !important;
+    }
+    /* The tag label sits in a nested div, not a span, so the sidebar's
+       blanket `color: #111111` used to paint it black on the black pill.
+       Cover every descendant, and keep the tag's own ✕ light. */
+    [data-testid="stMultiSelect"] span[data-baseweb="tag"],
+    [data-testid="stMultiSelect"] span[data-baseweb="tag"] * {
         color: #ffffff !important;
     }
-    [data-testid="stMultiSelect"] span[data-baseweb="tag"] span { color: #ffffff !important; }
-    [data-testid="stMultiSelect"] svg { color: #111111 !important; }
+    [data-testid="stMultiSelect"] span[data-baseweb="tag"] svg {
+        color: #ffffff !important;
+        fill: currentColor !important;
+    }
+    /* Chevron / clear-all icons outside the tags stay dark. */
+    [data-testid="stMultiSelect"] svg { color: #111111; }
 
     /* ── Slider ─────────────────────────────────────────────────── */
     [data-testid="stSlider"] [role="slider"] {
