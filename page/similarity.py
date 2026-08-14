@@ -103,16 +103,13 @@ def render_player_similarity_page(df_filtered, selected_position_group):
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        default_player = "F. Barba"
         player_names = sorted(df_filtered["Player"].tolist())
 
-        default_index = (
-            player_names.index(default_player) if default_player in player_names else 0
-        )
         selected_player = st.selectbox(
             "Choose a reference player:",
             options=player_names,
-            index=default_index,
+            index=None,
+            placeholder="Search for a player...",
             help="Find players similar to this reference player",
             key="similarity_reference_player",
         )

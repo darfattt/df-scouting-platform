@@ -168,7 +168,10 @@ class SimilarityScorer:
             # Handle NaN
             if pd.isna(ref_val):
                 ref_val = 0
-            cand_vals = np.nan_to_num(cand_vals, 0)
+            # nan= must be keyword: the second positional arg is `copy`, and
+            # copy=0 makes numpy write into the DataFrame's own buffer, which
+            # is read-only under copy-on-write.
+            cand_vals = np.nan_to_num(cand_vals, nan=0.0)
 
             # Normalize to 0-100 scale for consistency
             all_vals = np.append(cand_vals, ref_val)
